@@ -1,6 +1,6 @@
 # succint-zk-residency
 
-The goal fo the projects is to itnegrate multiples chains/proofs into de aggLayer.
+The goal fo the projects is to integrate multiples chains/proofs into de AggLayer.
 
 This project have the following proofs:
 
