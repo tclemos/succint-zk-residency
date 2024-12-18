@@ -7,7 +7,7 @@ IsValidiumMode = false
 ContractVersions = "banana"
 
 [Etherman]
-URL = "http://test-fep-type1-l1:8545"
+URL = "http://host.docker.internal:49629"
 
 [Log]
 Environment = "development" # "production" or "development"
@@ -23,23 +23,23 @@ CheckReorgsInterval="1h"
 
 [L1InfoTreeSync]
 DBPath = "/tmp/L1InfoTreeSync"
-GlobalExitRootAddr="0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
-RollupManagerAddr="0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e" 
+GlobalExitRootAddr="0x1f7ad7caA53e35b4f0D138dC5CBF91aC108a2674"
+RollupManagerAddr="0x2F50ef6b8e8Ee4E579B17619A92dE3E2ffbD8AD2" 
 SyncBlockChunkSize=10
 BlockFinality="LatestBlock"
-URLRPCL1="http://test-fep-type1-l1:8545"
+URLRPCL1="http://host.docker.internal:49629"
 WaitForNewBlocksPeriod="100ms"
 InitialBlock=0
 
 [AggOracle]
 TargetChainType="EVM"
-URLRPCL1="http://test-fep-type1-l2:8545"
+URLRPCL1="http://host.docker.internal:49629"
 BlockFinality="FinalizedBlock"
 WaitPeriodNextGER="1s"
 	[AggOracle.EVMSender]
-		GlobalExitRootL2="0x4267C8767b58a8189ec8E224D9c4b9017Cd408ab"
-		URLRPCL2="http://test-fep-type1-l2:8545"
-		ChainIDL2=42069
+		GlobalExitRootL2="0xf1d10182A771531d2F10484Df16C5bA6B751A87D"
+		URLRPCL2="http://host.docker.internal:51374"
+		ChainIDL2=2151908
 		GasOffset=0
 		WaitPeriodMonitorTx="1s"
 		SenderAddr="0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
@@ -59,9 +59,9 @@ WaitPeriodNextGER="1s"
 				SafeStatusL1NumberOfBlocks = 5
 				FinalizedStatusL1NumberOfBlocks = 10
 					[AggOracle.EVMSender.EthTxManager.Etherman]
-						URL = "http://test-fep-type1-l2:8545"
+						URL = "http://host.docker.internal:51374"
 						MultiGasProvider = false
-						L1ChainID = 42069
+						L1ChainID = 2151908
 						HTTPHeaders = []
 
 [RPC]
@@ -75,7 +75,7 @@ MaxRequestsPerIPAndSecond = 10
 DBPath = "/tmp/claimsopnsor"
 Enabled = true
 SenderAddr = "0x976ea74026e726554db657fa54763abd0c3a0aa9"
-BridgeAddrL2 = "0xa048D040Cf283c0F641Ae9BcFcD0864603A69951"
+BridgeAddrL2 = "0xD0eCF7bc4274e61b814cae1F5e7f090d866954Ff"
 MaxGas = 200000
 RetryAfterErrorPeriod = "1s"
 MaxRetryAttemptsAfterError = -1
@@ -98,9 +98,9 @@ GasOffset = 0
 		SafeStatusL1NumberOfBlocks = 5
 		FinalizedStatusL1NumberOfBlocks = 10
 			[ClaimSponsor.EthTxManager.Etherman]
-				URL = "http://test-fep-type1-l2:8545"
+				URL = "http://host.docker.internal:51374"
 				MultiGasProvider = false
-				L1ChainID = 42069
+				L1ChainID = 2151908
 				HTTPHeaders = []
 
 [L1Bridge2InfoIndexSync]
@@ -113,7 +113,7 @@ WaitForSyncersPeriod = "3s"
 DBPath = "/tmp/bridgel1sync"
 BlockFinality = "LatestBlock"
 InitialBlockNum = 0
-BridgeAddr = "0xAbbeC0792bb8639B2a64Cc895bBcf5E6CC427c41"
+BridgeAddr = "0xD71f8F956AD979Cc2988381B8A743a2fE280537D"
 SyncBlockChunkSize = 100
 RetryAfterErrorPeriod = "1s"
 MaxRetryAttemptsAfterError = -1
@@ -123,7 +123,7 @@ WaitForNewBlocksPeriod = "3s"
 DBPath = "/tmp/bridgel2sync"
 BlockFinality = "LatestBlock"
 InitialBlockNum = 0
-BridgeAddr = "0xa048D040Cf283c0F641Ae9BcFcD0864603A69951"
+BridgeAddr = "0xD0eCF7bc4274e61b814cae1F5e7f090d866954Ff"
 SyncBlockChunkSize = 100
 RetryAfterErrorPeriod = "1s"
 MaxRetryAttemptsAfterError = -1
@@ -133,7 +133,7 @@ WaitForNewBlocksPeriod = "3s"
 DBPath = "/tmp/lastgersync"
 BlockFinality = "LatestBlock"
 InitialBlockNum = 0
-GlobalExitRootL2Addr = "0x4267C8767b58a8189ec8E224D9c4b9017Cd408ab"
+GlobalExitRootL2Addr = "0xf1d10182A771531d2F10484Df16C5bA6B751A87D"
 RetryAfterErrorPeriod = "1s"
 MaxRetryAttemptsAfterError = -1
 WaitForNewBlocksPeriod = "1s"
@@ -171,14 +171,14 @@ GetBatchWaitInterval = "1500h"
 		SafeStatusL1NumberOfBlocks = 0
 		FinalizedStatusL1NumberOfBlocks = 0
 			[SequenceSender.EthTxManager.Etherman]
-				URL = "http://test-fep-type1-l1:8545"
+				URL = "http://host.docker.internal:49629"
 				MultiGasProvider = false
-				L1ChainID = 1337
+				L1ChainID = 271828
 
 
 [NetworkConfig.L1]
-L1ChainID = 1337
+L1ChainID = 271828
 PolAddr = "0x0000000000000000000000000000000000000000"
 ZkEVMAddr = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
-RollupManagerAddr = "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
-GlobalExitRootManagerAddr = "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
+RollupManagerAddr = "0x2F50ef6b8e8Ee4E579B17619A92dE3E2ffbD8AD2"
+GlobalExitRootManagerAddr = "0x1f7ad7caA53e35b4f0D138dC5CBF91aC108a2674"

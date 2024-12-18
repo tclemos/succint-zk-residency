@@ -19,9 +19,7 @@ services:
       - "/bin/sh"
       - "-c"
       - "cdk-node run --cfg /app/config.toml --custom-network-file /app/genesis.json --components aggoracle,rpc"
-    depends_on:
-      - test-fep-type1-l1
-      - test-fep-type1-l2
+    network_mode: "host"
 
   test-fep-type1-l1:
     container_name: test-fep-type1-l1

@@ -7,7 +7,7 @@ IsValidiumMode = false
 ContractVersions = "banana"
 
 [Etherman]
-URL = "http://test-fep-type1-l1:8545"
+URL = "XXX_l1URL"
 
 [Log]
 Environment = "development" # "production" or "development"
@@ -23,23 +23,23 @@ CheckReorgsInterval="1h"
 
 [L1InfoTreeSync]
 DBPath = "/tmp/L1InfoTreeSync"
-GlobalExitRootAddr="0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
-RollupManagerAddr="0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e" 
+GlobalExitRootAddr="XXX_GlobalExitRootL1"
+RollupManagerAddr="XXX_RollupL1" 
 SyncBlockChunkSize=10
 BlockFinality="LatestBlock"
-URLRPCL1="http://test-fep-type1-l1:8545"
+URLRPCL1="XXX_l1URL"
 WaitForNewBlocksPeriod="100ms"
 InitialBlock=0
 
 [AggOracle]
 TargetChainType="EVM"
-URLRPCL1="http://test-fep-type1-l2:8545"
+URLRPCL1="XXX_l1URL"
 BlockFinality="FinalizedBlock"
 WaitPeriodNextGER="1s"
 	[AggOracle.EVMSender]
 		GlobalExitRootL2="XXX_GlobalExitRootL2"
-		URLRPCL2="http://test-fep-type1-l2:8545"
-		ChainIDL2=42069
+		URLRPCL2="XXX_l2URL"
+		ChainIDL2=XXX_chainIDL2
 		GasOffset=0
 		WaitPeriodMonitorTx="1s"
 		SenderAddr="0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
@@ -59,9 +59,9 @@ WaitPeriodNextGER="1s"
 				SafeStatusL1NumberOfBlocks = 5
 				FinalizedStatusL1NumberOfBlocks = 10
 					[AggOracle.EVMSender.EthTxManager.Etherman]
-						URL = "http://test-fep-type1-l2:8545"
+						URL = "XXX_l2URL"
 						MultiGasProvider = false
-						L1ChainID = 42069
+						L1ChainID = XXX_chainIDL2
 						HTTPHeaders = []
 
 [RPC]
@@ -98,9 +98,9 @@ GasOffset = 0
 		SafeStatusL1NumberOfBlocks = 5
 		FinalizedStatusL1NumberOfBlocks = 10
 			[ClaimSponsor.EthTxManager.Etherman]
-				URL = "http://test-fep-type1-l2:8545"
+				URL = "XXX_l2URL"
 				MultiGasProvider = false
-				L1ChainID = 42069
+				L1ChainID = XXX_chainIDL2
 				HTTPHeaders = []
 
 [L1Bridge2InfoIndexSync]
@@ -113,7 +113,7 @@ WaitForSyncersPeriod = "3s"
 DBPath = "/tmp/bridgel1sync"
 BlockFinality = "LatestBlock"
 InitialBlockNum = 0
-BridgeAddr = "0xAbbeC0792bb8639B2a64Cc895bBcf5E6CC427c41"
+BridgeAddr = "XXX_BridgeL1"
 SyncBlockChunkSize = 100
 RetryAfterErrorPeriod = "1s"
 MaxRetryAttemptsAfterError = -1
@@ -171,14 +171,14 @@ GetBatchWaitInterval = "1500h"
 		SafeStatusL1NumberOfBlocks = 0
 		FinalizedStatusL1NumberOfBlocks = 0
 			[SequenceSender.EthTxManager.Etherman]
-				URL = "http://test-fep-type1-l1:8545"
+				URL = "XXX_l1URL"
 				MultiGasProvider = false
-				L1ChainID = 1337
+				L1ChainID = XXX_chainIDL1
 
 
 [NetworkConfig.L1]
-L1ChainID = 1337
+L1ChainID = XXX_chainIDL1
 PolAddr = "0x0000000000000000000000000000000000000000"
 ZkEVMAddr = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
-RollupManagerAddr = "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e"
-GlobalExitRootManagerAddr = "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"
+RollupManagerAddr = "XXX_RollupL1"
+GlobalExitRootManagerAddr = "XXX_GlobalExitRootL1"
