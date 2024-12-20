@@ -2,12 +2,12 @@ ForkUpgradeBatchNumber = 0
 ForkUpgradeNewForkId = 0
 
 [Common]
-NetworkID = 1
+NetworkID = 2
 IsValidiumMode = false
 ContractVersions = "banana"
 
 [Etherman]
-URL = "http://host.docker.internal:49629"
+URL = "http://host.docker.internal:58669"
 
 [Log]
 Environment = "development" # "production" or "development"
@@ -27,18 +27,18 @@ GlobalExitRootAddr="0x1f7ad7caA53e35b4f0D138dC5CBF91aC108a2674"
 RollupManagerAddr="0x2F50ef6b8e8Ee4E579B17619A92dE3E2ffbD8AD2" 
 SyncBlockChunkSize=10
 BlockFinality="LatestBlock"
-URLRPCL1="http://host.docker.internal:49629"
+URLRPCL1="http://host.docker.internal:58669"
 WaitForNewBlocksPeriod="100ms"
 InitialBlock=0
 
 [AggOracle]
 TargetChainType="EVM"
-URLRPCL1="http://host.docker.internal:49629"
+URLRPCL1="http://host.docker.internal:58669"
 BlockFinality="FinalizedBlock"
 WaitPeriodNextGER="1s"
 	[AggOracle.EVMSender]
-		GlobalExitRootL2="0xf1d10182A771531d2F10484Df16C5bA6B751A87D"
-		URLRPCL2="http://host.docker.internal:51374"
+		GlobalExitRootL2="0x6F9a46C1B4bbea11f7364E0B81024b1715E85A77"
+		URLRPCL2="http://host.docker.internal:58971"
 		ChainIDL2=2151908
 		GasOffset=0
 		WaitPeriodMonitorTx="1s"
@@ -59,7 +59,7 @@ WaitPeriodNextGER="1s"
 				SafeStatusL1NumberOfBlocks = 5
 				FinalizedStatusL1NumberOfBlocks = 10
 					[AggOracle.EVMSender.EthTxManager.Etherman]
-						URL = "http://host.docker.internal:51374"
+						URL = "http://host.docker.internal:58971"
 						MultiGasProvider = false
 						L1ChainID = 2151908
 						HTTPHeaders = []
@@ -75,7 +75,7 @@ MaxRequestsPerIPAndSecond = 10
 DBPath = "/tmp/claimsopnsor"
 Enabled = true
 SenderAddr = "0x976ea74026e726554db657fa54763abd0c3a0aa9"
-BridgeAddrL2 = "0xD0eCF7bc4274e61b814cae1F5e7f090d866954Ff"
+BridgeAddrL2 = "0x9C819855CEB276D74978F205aE4481083468bBAF"
 MaxGas = 200000
 RetryAfterErrorPeriod = "1s"
 MaxRetryAttemptsAfterError = -1
@@ -98,7 +98,7 @@ GasOffset = 0
 		SafeStatusL1NumberOfBlocks = 5
 		FinalizedStatusL1NumberOfBlocks = 10
 			[ClaimSponsor.EthTxManager.Etherman]
-				URL = "http://host.docker.internal:51374"
+				URL = "http://host.docker.internal:58971"
 				MultiGasProvider = false
 				L1ChainID = 2151908
 				HTTPHeaders = []
@@ -123,7 +123,7 @@ WaitForNewBlocksPeriod = "3s"
 DBPath = "/tmp/bridgel2sync"
 BlockFinality = "LatestBlock"
 InitialBlockNum = 0
-BridgeAddr = "0xD0eCF7bc4274e61b814cae1F5e7f090d866954Ff"
+BridgeAddr = "0x9C819855CEB276D74978F205aE4481083468bBAF"
 SyncBlockChunkSize = 100
 RetryAfterErrorPeriod = "1s"
 MaxRetryAttemptsAfterError = -1
@@ -133,7 +133,7 @@ WaitForNewBlocksPeriod = "3s"
 DBPath = "/tmp/lastgersync"
 BlockFinality = "LatestBlock"
 InitialBlockNum = 0
-GlobalExitRootL2Addr = "0xf1d10182A771531d2F10484Df16C5bA6B751A87D"
+GlobalExitRootL2Addr = "0x6F9a46C1B4bbea11f7364E0B81024b1715E85A77"
 RetryAfterErrorPeriod = "1s"
 MaxRetryAttemptsAfterError = -1
 WaitForNewBlocksPeriod = "1s"
@@ -171,7 +171,7 @@ GetBatchWaitInterval = "1500h"
 		SafeStatusL1NumberOfBlocks = 0
 		FinalizedStatusL1NumberOfBlocks = 0
 			[SequenceSender.EthTxManager.Etherman]
-				URL = "http://host.docker.internal:49629"
+				URL = "http://host.docker.internal:58669"
 				MultiGasProvider = false
 				L1ChainID = 271828
 

@@ -14,8 +14,11 @@ import (
 	"github.com/0xPolygon/cdk-contracts-tooling/contracts/banana/polygonzkevmbridgev2"
 	gerContractL1 "github.com/0xPolygon/cdk-contracts-tooling/contracts/banana/polygonzkevmglobalexitrootv2"
 	gerl2 "github.com/0xPolygon/cdk-contracts-tooling/contracts/sovereign/globalexitrootmanagerl2sovereignchain"
+	"github.com/0xPolygon/cdk/bridgesync"
 	"github.com/0xPolygon/cdk/claimsponsor"
+	"github.com/0xPolygon/cdk/l1infotreesync"
 	"github.com/0xPolygon/cdk/log"
+	cdkClient "github.com/0xPolygon/cdk/rpc/client"
 	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevmbridge"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -29,21 +32,24 @@ import (
 )
 
 const (
-	l1URL                         = "http://127.0.0.1:49629" // kurtosis port print cdk el-1-geth-lighthouse rpc
+	logColumnWidth = 80
+
+	l1URL                         = "http://127.0.0.1:58669" // kurtosis port print cdk el-1-geth-lighthouse rpc
 	l1ChainID                     = 271828
-	l1RollupAddr                  = "0x2F50ef6b8e8Ee4E579B17619A92dE3E2ffbD8AD2"
-	l1BridgeAddr                  = "0xD71f8F956AD979Cc2988381B8A743a2fE280537D"
-	l1GERManagerAddr              = "0x1f7ad7caA53e35b4f0D138dC5CBF91aC108a2674"
+	l1RollupAddrHex               = "0x2F50ef6b8e8Ee4E579B17619A92dE3E2ffbD8AD2"
+	l1BridgeAddrHex               = "0xD71f8F956AD979Cc2988381B8A743a2fE280537D"
+	l1GERManagerAddrHex           = "0x1f7ad7caA53e35b4f0D138dC5CBF91aC108a2674"
 	l1PrefundedPrivatekey         = "0xbcdf20249abf0ed6d944c0288fad489e33f66b3960d9e6229c1cd214ed3bbe31" // 0x8943545177806ED17B9F23F0a21ee5948eCaa776
 	l1BridgeAssetSenderPrivateKey = l1PrefundedPrivatekey
 
-	l2URL                               = "http://127.0.0.1:51374" // kurtosis port print cdk op-el-1-op-geth-op-node-op-kurtosis rpc
-	l2ChainID                           = 2151908
-	l2NetworkID                         = uint32(1)
-	l2PrefundedPrivatekey               = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" // 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
-	l2BridgeAssetClaimSponsorPrivateKey = l2PrefundedPrivatekey
-	l2AggOracleSenderAddr               = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8" // needed to fund this account
-	// l2BridgeServiceURL                  = "http://127.0.0.1:62662"                     // kurtosis port print cdk zkevm-bridge-service-001 rpc
+	l2URL                    = "http://127.0.0.1:58971" // kurtosis port print cdk op-el-1-op-geth-op-node-op-kurtosis rpc
+	l2ChainID                = 2151908
+	l2NetworkID              = uint32(2)
+	l2PrefundedPrivatekey    = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" // 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+	l2ClaimSponsorAddrHex    = "0x5f5dB0D4D58310F53713eF4Df80ba6717868A9f8"                         // needed to fund this account
+	l2AggOracleSenderAddrHex = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"                         // needed to fund this account
+	l2BridgeReceiverAddrHex  = "0x00babaca00babaca00babaca00babaca00babaca"
+	l2BridgeServiceURL       = "http://127.0.0.1:5576" // this is the RPC running inside of the AggOracle container
 
 	// these parameters are used when you already executed the test once and want
 	// to run the test again without deploying the contracts again
@@ -51,8 +57,8 @@ const (
 	// you can set the deployed to true and copy them here to avoid deploying the
 	// contracts again
 	deployed                = true
-	preDeployedGERAddrL2    = "0xf1d10182A771531d2F10484Df16C5bA6B751A87D"
-	preDeployedBridgeAddrL2 = "0xD0eCF7bc4274e61b814cae1F5e7f090d866954Ff"
+	preDeployedGERAddrL2    = "0x6F9a46C1B4bbea11f7364E0B81024b1715E85A77"
+	preDeployedBridgeAddrL2 = "0x9C819855CEB276D74978F205aE4481083468bBAF"
 )
 
 func TestBridgeEVM(t *testing.T) {
@@ -66,7 +72,7 @@ func TestBridgeEVM(t *testing.T) {
 	fmt.Println("L1 connected!")
 	fmt.Println("")
 	fmt.Println("preparing and connecting to L2")
-	clientL2, gerAddrL2, gerL2, bridgeAddrL2, _ := prepareAndConnectToL2(t, authL2)
+	clientL2, gerAddrL2, gerL2, bridgeAddrL2, bridgeL2 := prepareAndConnectToL2(t, authL2)
 	fmt.Println("L2 prepared and connected!")
 	fmt.Println("")
 
@@ -79,13 +85,34 @@ func TestBridgeEVM(t *testing.T) {
 	fmt.Println("")
 	go bridgeAssets(t,
 		clientL1, authL1, bridgeL1, gerL1,
-		authL2,
+		authL2, bridgeL2,
 	)
+
+	go balanceMonitor(t, authL1, clientL1, clientL2)
 
 	fmt.Println("watching for InsertGlobalExitRoot events")
 	fmt.Println("")
 	watchInsertGEREvents(ctx, t, clientL2, gerL2, gerAddrL2)
-	// checkGERUpdatesOnL2(t, gerL2)
+}
+
+func balanceMonitor(t *testing.T, authL1 *bind.TransactOpts, clientL1, clientL2 *ethclient.Client) {
+	for {
+		senderAddr := authL1.From
+		senderBalance, err := clientL1.BalanceAt(context.Background(), senderAddr, nil)
+		require.NoError(t, err)
+		senderDesc := fmt.Sprintf("SENDER %v: %v", senderAddr.String(), senderBalance.String())
+
+		receiverAddr := common.HexToAddress(l2BridgeReceiverAddrHex)
+		receiverBalance, err := clientL2.BalanceAt(context.Background(), receiverAddr, nil)
+		require.NoError(t, err)
+		receiverDesc := fmt.Sprintf("RECEIVER %v: %v", receiverAddr.String(), receiverBalance.String())
+
+		fmt.Println()
+		fmt.Println("BALANCES:")
+		fmt.Println(senderDesc, strings.Repeat(" ", logColumnWidth-len(senderDesc)-1), receiverDesc)
+		fmt.Println()
+		time.Sleep(10 * time.Second)
+	}
 }
 
 func watchInsertGEREvents(ctx context.Context, t *testing.T, clientL2 *ethclient.Client, gerL2 *gerl2.Globalexitrootmanagerl2sovereignchain, gerAddrL2 common.Address) {
@@ -107,7 +134,7 @@ func watchInsertGEREvents(ctx context.Context, t *testing.T, clientL2 *ethclient
 			require.NoError(t, err)
 
 			newGERHashHex := common.BytesToHash(insertGlobalExitRootLog.NewGlobalExitRoot[:]).String()
-			fmt.Println(strings.Repeat(" ", 80), "NEW L2 GER:", newGERHashHex)
+			fmt.Println(strings.Repeat(" ", logColumnWidth), "NEW L2 GER:", newGERHashHex)
 
 			if fromBlock <= l.BlockNumber {
 				fromBlock = l.BlockNumber + 1
@@ -125,11 +152,11 @@ func connectToL1(t *testing.T, auth *bind.TransactOpts) (
 	client, err := ethclient.Dial(l1URL)
 	require.NoError(t, err)
 
-	gerAddr := common.HexToAddress(l1GERManagerAddr)
+	gerAddr := common.HexToAddress(l1GERManagerAddrHex)
 	gerContract, err := gerContractL1.NewPolygonzkevmglobalexitrootv2(gerAddr, client)
 	require.NoError(t, err)
 
-	bridgeAddr := common.HexToAddress(l1BridgeAddr)
+	bridgeAddr := common.HexToAddress(l1BridgeAddrHex)
 	bridgeContract, err := polygonzkevmbridge.NewPolygonzkevmbridge(bridgeAddr, client)
 	require.NoError(t, err)
 
@@ -213,6 +240,19 @@ func prepareAndConnectToL2(t *testing.T, auth *bind.TransactOpts) (
 	require.NoError(t, err)
 	require.Equal(t, amountToTransfer, balance)
 
+	// fund claim sponsor
+	fmt.Println("funding claim sponsor")
+	claimSponsorAddr := common.HexToAddress(l2ClaimSponsorAddrHex)
+	tx = types.NewTransaction(nonce+2, claimSponsorAddr, amountToTransfer, gasLimit, gasPrice, nil)
+	signedTx, err = auth.Signer(auth.From, tx)
+	require.NoError(t, err)
+	err = client.SendTransaction(ctx, signedTx)
+	require.NoError(t, err)
+	waitTxMined(t, client, signedTx.Hash(), "funding claim sponsor tx not mined")
+	balance, err = client.BalanceAt(ctx, claimSponsorAddr, nil)
+	require.NoError(t, err)
+	require.Equal(t, amountToTransfer, balance)
+
 	// deploy bridge impl
 	fmt.Println("deploying bridge impl")
 	bridgeImplementationAddr, bridgeImplementationTx, _, err := polygonzkevmbridgev2.DeployPolygonzkevmbridgev2(authDeployer, client)
@@ -227,7 +267,7 @@ func prepareAndConnectToL2(t *testing.T, auth *bind.TransactOpts) (
 	bridgeABI, err := polygonzkevmbridgev2.Polygonzkevmbridgev2MetaData.GetAbi()
 	require.NoError(t, err)
 	dataCallProxy, err := bridgeABI.Pack("initialize",
-		uint32(1),        //network ID
+		l2NetworkID,      //network ID
 		common.Address{}, // gasTokenAddressMainnet"
 		uint32(0),        // gasTokenNetworkMainnet
 		precalculatedAddr,
@@ -276,9 +316,9 @@ func editConfig(t *testing.T, gerL2, bridgeL2 common.Address) {
 	file, err := os.ReadFile("./config/template_cdk.toml")
 	require.NoError(t, err)
 	// l1 updates
-	updatedConfig := strings.ReplaceAll(string(file), "XXX_GlobalExitRootL1", l1GERManagerAddr)
-	updatedConfig = strings.ReplaceAll(updatedConfig, "XXX_BridgeL1", l1BridgeAddr)
-	updatedConfig = strings.ReplaceAll(updatedConfig, "XXX_RollupL1", l1RollupAddr)
+	updatedConfig := strings.ReplaceAll(string(file), "XXX_GlobalExitRootL1", l1GERManagerAddrHex)
+	updatedConfig = strings.ReplaceAll(updatedConfig, "XXX_BridgeL1", l1BridgeAddrHex)
+	updatedConfig = strings.ReplaceAll(updatedConfig, "XXX_RollupL1", l1RollupAddrHex)
 	updatedConfig = strings.ReplaceAll(updatedConfig, "XXX_chainIDL1", fmt.Sprint(l1ChainID))
 	updatedConfig = strings.ReplaceAll(updatedConfig, "XXX_l1URL", dockerizeLocalURLs(l1URL))
 
@@ -300,18 +340,20 @@ func dockerizeLocalURLs(url string) string {
 }
 
 func runAggOracle(t *testing.T) {
-	msg, err := exec.Command("bash", "-l", "-c", "docker compose up -d test-fep-type1-cdk").CombinedOutput()
-	require.NoError(t, err, string(msg))
+	//msg, err := exec.Command("bash", "-l", "-c", "docker compose up -d test-fep-type1-cdk").CombinedOutput()
+	msg, err := exec.Command("bash", "-l", "-c", "docker run --name AggOracle --hostname=docker-desktop --env=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --volume=/Users/thiago/github.com/tclemos/succint-zk-residency/fep-type-1/e2etest/config/cdk.toml:/app/config.toml:rw --volume=/Users/thiago/github.com/tclemos/succint-zk-residency/fep-type-1/e2etest/config/aggoracle.keystore:/app/keystore/aggoracle.keystore:rw --volume=/Users/thiago/github.com/tclemos/succint-zk-residency/fep-type-1/e2etest/config/claimsponsor.keystore:/app/keystore/claimsponsor.keystore:rw -p 5576:5576 --restart=no  -d arnaubennassar/cdk:12b8e2c sh -c \"cdk-node run --cfg /app/config.toml --custom-network-file /app/genesis.json --components aggoracle,rpc\"").CombinedOutput()
+	if err != nil && !strings.Contains(string(msg), "is already in use by container") {
+		require.NoError(t, err, string(msg))
+	}
 	time.Sleep(time.Second * 2)
-	require.NoError(t, err)
 }
 
 func bridgeAssets(
 	t *testing.T,
 	clientL1 *ethclient.Client, authL1 *bind.TransactOpts, bridgeL1 *polygonzkevmbridge.Polygonzkevmbridge, gerL1Contract *gerContractL1.Polygonzkevmglobalexitrootv2,
-	authL2 *bind.TransactOpts,
+	authL2 *bind.TransactOpts, bridgeL2 *polygonzkevmbridgev2.Polygonzkevmbridgev2,
 ) {
-	// bridgeClient := cdkClient.NewClient(l2BridgeServiceURL)
+	bridgeClient := cdkClient.NewClient(l2BridgeServiceURL)
 	currentGER, err := gerL1Contract.GetLastGlobalExitRoot(nil)
 	require.NoError(t, err)
 
@@ -328,7 +370,7 @@ func bridgeAssets(
 			OriginNetwork:      0,
 			OriginTokenAddress: common.Address{},
 			DestinationNetwork: l2NetworkID,
-			DestinationAddress: authL2.From,
+			DestinationAddress: common.HexToAddress(l2BridgeReceiverAddrHex),
 			Amount:             amount,
 			Metadata:           nil,
 		}
@@ -344,6 +386,78 @@ func bridgeAssets(
 		require.NotEqual(t, gerBefore, gerAfter, "GER not updated on L1")
 		// fmt.Printf("GER updated on L1 from %v to %v\n", common.BytesToHash(gerBefore[:]).String(), common.BytesToHash(gerAfter[:]).String())
 		fmt.Println("NEW L1 GER:", common.BytesToHash(gerAfter[:]).String())
+
+		// claim on L2
+		depositCountBig, err := bridgeL1.DepositCount(nil)
+		require.NoError(t, err)
+
+		depositCount := uint32(depositCountBig.Uint64())
+		depositCount--
+
+		var bridgeIncludedAtIndex uint32
+		found := false
+		for i := 0; i < 40; i++ { // block needs to be finalised, takes ~32s
+			bridgeIncludedAtIndex, err = bridgeClient.L1InfoTreeIndexForBridge(0, depositCount)
+			if err == nil {
+				found = true
+				break
+			}
+			time.Sleep(time.Second * 2)
+		}
+		require.True(t, found)
+		// fmt.Println("Bridge included at L1 Info Tree Index: ", bridgeIncludedAtIndex)
+
+		// fmt.Println("getting info already injected on L2")
+		var info *l1infotreesync.L1InfoTreeLeaf
+		found = false
+		for i := 0; i < 34; i++ {
+			info, err = bridgeClient.InjectedInfoAfterIndex(l2NetworkID, bridgeIncludedAtIndex)
+			if err == nil {
+				found = true
+				break
+			}
+			time.Sleep(time.Second * 2)
+		}
+		require.True(t, found)
+		require.NoError(t, err)
+		// fmt.Printf("Info associated to the first GER injected on L2 after index %d: %+v\n", bridgeIncludedAtIndex, info)
+		proof, err := bridgeClient.ClaimProof(0, depositCount, info.L1InfoTreeIndex)
+		require.NoError(t, err)
+		// fmt.Printf("ClaimProof received from bridge service\n")
+
+		// fmt.Println("Requesting service to sponsor claim")
+		claimL1toL2.ProofLocalExitRoot = proof.ProofLocalExitRoot
+		claimL1toL2.ProofRollupExitRoot = proof.ProofRollupExitRoot
+		claimL1toL2.GlobalIndex = bridgesync.GenerateGlobalIndex(true, claimL1toL2.DestinationNetwork-1, depositCount)
+		claimL1toL2.MainnetExitRoot = info.MainnetExitRoot
+		claimL1toL2.RollupExitRoot = info.RollupExitRoot
+		err = bridgeClient.SponsorClaim(claimL1toL2)
+		require.NoError(t, err)
+		// fmt.Println("waiting for service to send claim on behalf of the user...")
+		found = false
+		for i := 0; i < 20; i++ {
+			time.Sleep(time.Second * 2)
+			status, err := bridgeClient.GetSponsoredClaimStatus(claimL1toL2.GlobalIndex)
+			// fmt.Println("sponsored claim status: ", status)
+			if err != nil {
+				// fmt.Println("error getting sponsored claim status: ", err)
+				continue
+			}
+			require.NotEqual(t, claimsponsor.FailedClaimStatus, status)
+			if status == claimsponsor.SuccessClaimStatus {
+				found = true
+				break
+			}
+		}
+		require.True(t, found)
+		// fmt.Println("service reports that the claim tx is successful")
+
+		// check that the bridge is claimed on L2
+		// fmt.Println("checking if bridge is claimed on L2...")
+		isClaimed, err := bridgeL2.IsClaimed(&bind.CallOpts{}, depositCount, 0)
+		require.NoError(t, err)
+		require.True(t, isClaimed)
+		// fmt.Println("bridge completed!")
 	}
 }
 
